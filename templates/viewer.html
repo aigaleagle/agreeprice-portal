@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Product Table</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f9f9f9;
+      color: #333;
+      margin: 0;
+      padding: 0 20px;
+      transition: background 0.3s, color 0.3s;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #4CAF50;
+      color: white;
+      padding: 15px 20px;
+      border-radius: 0 0 8px 8px;
+    }
+    header h1 { margin: 0; }
+    header button {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    main {
+      max-width: 800px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    label { font-weight: bold; }
+    input[type="date"] {
+      padding: 5px 10px;
+      margin-left: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table th {
+      background: #4CAF50;
+      color: white;
+      padding: 10px;
+      text-align: left;
+    }
+    table td {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    table tr:nth-child(even) {
+      background: #f2f2f2;
+    }
+    aside {
+      position: fixed;
+      top: 80px; right: 20px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 20px;
+      width: 220px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    .hidden { display: none; }
+    .toggle-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 15px;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 26px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0; height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px; width: 20px;
+      left: 3px; bottom: 3px;
+      background: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #4CAF50;
+    }
+    input:checked + .slider:before {
+      transform: translateX(24px);
+    }
+
+    /* Dark theme */
+    body.dark { background: #121212; color: #eee; }
+    body.dark main { background: #1e1e1e; }
+    body.dark header { background: #333; }
+    body.dark table th { background: #333; }
+    body.dark table tr:nth-child(even) { background: #222; }
+    body.dark aside { background: #1e1e1e; border-color: #555; }
+
+
+
+
+  /* ... your existing styles ... */
+  input[type="date"] {
+    padding: 5px 10px;
+    margin-left: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  body.dark input[type="date"] {
+    background: #333;
+    color: #eee;
+    border: 1px solid #555;
+  }
+
+
+
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="title">Product Table</h1>
+    <button onclick="toggleSettings()">⚙️</button>
+  </header>
+
+  <main>
+    <label id="selectDateLabel">Select Date:</label>
+    <input type="date" id="datePicker" value="{{ today }}" onchange="loadProducts()">
+    <table>
+      <thead>
+        <tr>
+          <th id="thProduct">Product</th>
+          <th id="thQuantity">Quantity</th>
+          <th id="thPrice">Price</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </main>
+
+  <aside id="settingsPanel" class="hidden">
+    <button onclick="toggleSettings()">✖</button>
+    <h2 id="settingsTitle">Settings</h2>
+    <div id="profile"><p id="profileName">Name: User</p></div>
+    <div class="toggle-container">
+      <span id="themeLabel">Dark Theme</span>
+      <label class="switch">
+        <input type="checkbox" id="themeToggle" onchange="toggleTheme()">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="toggle-container">
+      <span id="langLabel">ಕನ್ನಡ</span>
+      <label class="switch">
+        <input type="checkbox" id="langToggle" onchange="switchLanguage()">
+        <span class="slider"></span>
+      </label>
+    </div>
+  </aside>
+
+  <script>
+    let currentLang = localStorage.getItem('lang') || 'en';
+
+   const productNames = {
+  // 🌾 Food Grains
+  Rice: { kn: "ಅಕ್ಕಿ", en: "Rice" },
+  Wheat: { kn: "ಗೋಧಿ", en: "Wheat" },
+  Maize: { kn: "ಮಕ್ಕಳ ಜೋಳ", en: "Maize" },
+  Barley: { kn: "ಜೌ", en: "Barley" },
+  Millet: { kn: "ಸಿರಿಧಾನ್ಯ (ಬಾಜ್ರಾ, ರಾಗಿ, ಜೋಳ)", en: "Millet" },
+
+  // 🫘 Pulses
+  Chickpeas: { kn: "ಕಡಲೆಕಾಯಿ (ಚನಾ)", en: "Chickpeas" },
+  "Green Gram": { kn: "ಹುಡುಗರೆ (ಮೂಂಗ್)", en: "Green Gram" },
+  "Black Gram": { kn: "ಉದ್ದಿನ bele (ಉರದ್)", en: "Black Gram" },
+  Lentils: { kn: "ಮಸೂರ bele", en: "Lentils" },
+  "Pigeon Pea": { kn: "ತು್ವರ bele (ಅರಹರ್)", en: "Pigeon Pea" },
+
+  // 🧅 Vegetables
+  Potato: { kn: "ಆಲೂಗಡ್ಡೆ", en: "Potato" },
+  Onion: { kn: "ಈರಳ್ಳಿ", en: "Onion" },
+  Tomato: { kn: "ಟೊಮೇಟೋ", en: "Tomato" },
+  Brinjal: { kn: "ಬದನೆಕಾಯಿ", en: "Brinjal" },
+  Spinach: { kn: "ಪಾಲಕ್ (ಸೊಪ್ಪು)", en: "Spinach" },
+  Cauliflower: { kn: "ಹೂಕೋಸು", en: "Cauliflower" },
+  Cabbage: { kn: "ಎಲೆಕೋಸು", en: "Cabbage" },
+  Okra: { kn: "ಬೆಂಡೆಕಾಯಿ", en: "Okra" },
+
+  // 🍎 Fruits
+  Mango: { kn: "ಮಾವು", en: "Mango" },
+  Banana: { kn: "ಬಾಳೆಹಣ್ಣು", en: "Banana" },
+  Apple: { kn: "ಸೇಬು", en: "Apple" },
+  Grapes: { kn: "ದ್ರಾಕ್ಷಿ", en: "Grapes" },
+  Orange: { kn: "ಕಿತ್ತಳೆ", en: "Orange" },
+  Papaya: { kn: "ಪಪ್ಪಾಯಿ", en: "Papaya" },
+  Guava: { kn: "ಪೇರಲೆ", en: "Guava" },
+  Pomegranate: { kn: "ದಾಳಿಂಬೆ", en: "Pomegranate" },
+
+  // 🫒 Oilseeds & Cash Crops
+  Groundnut: { kn: "ನೆಲಗಡಲೆ", en: "Groundnut" },
+  Mustard: { kn: "ಸಾಸಿವೆ", en: "Mustard" },
+  Soybean: { kn: "ಸೋಯಾಬೀನ್", en: "Soybean" },
+  Sunflower: { kn: "ಸೂರ್ಯಕಾಂತಿ", en: "Sunflower" },
+  Cotton: { kn: "ಹತ್ತಿ", en: "Cotton" },
+  Sugarcane: { kn: "ಉಪ್ಪುಸಕ್ಕರೆ", en: "Sugarcane" },
+  Tea: { kn: "ಟೀ", en: "Tea" },
+  Coffee: { kn: "ಕಾಫಿ", en: "Coffee" },
+  "Areca Nut": { kn: "ಅಡಿಕೆ", en: "Areca Nut" },
+  Pepper: { kn: "ಮೆಣಸು", en: "Pepper" },
+  Cardamom: { kn: "ಎಲಕ್ಕಿ", en: "Cardamom" },
+
+  // 🌿 Spices
+  "Black Pepper": { kn: "ಕಪ್ಪು ಮೆಣಸು", en: "Black Pepper" },
+  Turmeric: { kn: "ಅರಿಶಿನ", en: "Turmeric" },
+  Ginger: { kn: "ಶುಂಠಿ", en: "Ginger" },
+  Garlic: { kn: "ಬೆಳ್ಳುಳ್ಳಿ", en: "Garlic" },
+  Cloves: { kn: "ಲವಂಗ", en: "Cloves" },
+  Cinnamon: { kn: "ದಾಲ್ಚಿನ್ನಿ", en: "Cinnamon" },
+  Cumin: { kn: "ಜೀರಿಗೆ", en: "Cumin" },
+  Coriander: { kn: "ಕೋಟಂಬರಿ", en: "Coriander" }
+};
+
+
+    const translations = {
+      noRecords: { en: "No records found", kn: "ದಾಖಲೆಗಳು ಕಂಡುಬಂದಿಲ್ಲ" },
+      productHeader: { en: "Product", kn: "ಉತ್ಪನ್ನ" },
+      quantityHeader: { en: "Quantity", kn: "ಪ್ರಮಾಣ" },
+      priceHeader: { en: "Price", kn: "ಬೆಲೆ" },
+      selectDate: { en: "Select Date:", kn: "ದಿನಾಂಕ ಆಯ್ಕೆಮಾಡಿ:" },
+      settingsTitle: { en: "Settings", kn: "ಸೆಟ್ಟಿಂಗ್‌ಗಳು" },
+      profileName: { en: "Name: User", kn: "ಹೆಸರು: ಬಳಕೆದಾರ" },
+      darkTheme: { en: "Dark Theme", kn: "ಡಾರ್ಕ್ ಥೀಮ್" },
+    };
+    
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark');
+        document.getElementById('themeToggle').checked = true;
+      }
+      if (currentLang === 'kn') {
+        document.getElementById('langToggle').checked = true;
+        switchLanguage(true);
+      }
+      loadProducts();
+    });
+
+    function toggleSettings() {
+      document.getElementById('settingsPanel').classList.toggle('hidden');
+    }
+
+    function toggleTheme() {
+      const isDark = document.getElementById('themeToggle').checked;
+      document.body.classList.toggle('dark', isDark);
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    }
+
+    function switchLanguage(forceKn) {
+      const isKn = forceKn || document.getElementById('langToggle').checked;
+      currentLang = isKn ? 'kn' : 'en';
+      localStorage.setItem('lang', currentLang);
+
+      document.getElementById('title').innerText = currentLang === 'kn' ? "ಉತ್ಪನ್ನ ಪಟ್ಟಿಕೆ" : "Product Table";
+      document.getElementById('selectDateLabel').innerText = translations.selectDate[currentLang];
+      document.getElementById('thProduct').innerText = translations.productHeader[currentLang];
+      document.getElementById('thQuantity').innerText = translations.quantityHeader[currentLang];
+      document.getElementById('thPrice').innerText = translations.priceHeader[currentLang];
+      document.getElementById('settingsTitle').innerText = translations.settingsTitle[currentLang];
+      document.getElementById('profileName').innerText = translations.profileName[currentLang];
+      document.getElementById('themeLabel').innerText = translations.darkTheme[currentLang];
+      document.getElementById('langLabel').innerText = currentLang === 'kn' ? 'ENG' : 'ಕನ್ನಡ';
+
+      loadProducts();
+    }
+
+    function loadProducts() {
+      const date = document.getElementById('datePicker').value;
+      fetch('/get_products', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: `date=${date}`
+      })
+      .then(res => res.json())
+      .then(data => {
+        const tbody = document.querySelector('tbody');
+        tbody.innerHTML = '';
+        if (data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="3">${translations.noRecords[currentLang]}</td></tr>`;
+        } else {
+          data.forEach(row => {
+            const prod = row[1];
+            const name = productNames[prod] ? productNames[prod][currentLang] : prod;
+            tbody.innerHTML += `<tr><td>${name}</td><td>${row[2]}</td><td>₹ ${row[3]}</td></tr>`;
+          });
+        }
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body class="bg-light">
+
+  <div class="container py-5">
+    <h1 class="mb-4 text-center">Admin Dashboard</h1>
+
+    {% if session.get('admin_logged_in') %}
+      <div class="row justify-content-center g-4">
+        <div class="col-md-4">
+          <div class="card text-center shadow">
+            <div class="card-body">
+              <h5 class="card-title">Manage Companies</h5>
+              <p class="card-text">Add, edit, or remove registered companies.</p>
+              <a href="{{ url_for('manage_companies') }}" class="btn btn-primary">Go to Companies</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="card text-center shadow">
+            <div class="card-body">
+              <h5 class="card-title">Manage Products & Items</h5>
+              <p class="card-text">Add, edit, or remove products and items.</p>
+              <a href="{{ url_for('manage_products') }}" class="btn btn-success">Go to Products</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="text-center mt-4">
+        <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+      </div>
+
+    {% else %}
+      <!-- This fallback only in case JS fails -->
+      <div class="text-center">
+        <p>Please login to access the dashboard.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- ✅ Login Modal -->
+  <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+      <form method="POST" action="{{ url_for('admin_login') }}" class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="loginModalLabel">Admin Login</h5>
+        </div>
+        <div class="modal-body">
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                  {{ message }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              {% endfor %}
+            {% endif %}
+          {% endwith %}
+
+          <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" class="form-control" name="username" required>
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" name="password" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Login</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      {% 
+        if not session.get('admin_logged_in') %}
+        var loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+        loginModal.show();
+      {% endif %}
+    });
+  </script>
+
+</body>
+</html>

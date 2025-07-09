@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Product Selector</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8f9fa;
+      padding: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      border: 1px solid #dee2e6;
+      padding: 12px 15px;
+      text-align: center;
+    }
+
+    th {
+      background: #007bff;
+      color: #fff;
+    }
+
+    input[type="text"], input[type="number"], input[type="date"], select {
+      padding: 8px;
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background: #fff;
+    }
+
+    select:focus, input:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 3px rgba(0, 123, 255, 0.5);
+    }
+
+    .search-container {
+      position: relative;
+    }
+
+    .search-results {
+      border: 1px solid #ccc;
+      border-top: none;
+      max-height: 200px;
+      overflow-y: auto;
+      background: #fff;
+      position: absolute;
+      width: 100%;
+      z-index: 999;
+      display: none;
+      text-align: left;
+    }
+
+    .search-results div {
+      padding: 8px;
+      cursor: pointer;
+    }
+
+    .search-results div:hover {
+      background: #f1f1f1;
+    }
+
+    button[type="submit"] {
+      margin-top: 20px;
+      padding: 12px 30px;
+      background: #007bff;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+
+    button[type="submit"]:hover {
+      background: #0056b3;
+    }
+
+    .center {
+      text-align: center;
+    }
+
+    .message {
+      text-align: center;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+
+    .success {
+      color: green;
+    }
+
+    .error {
+      color: red;
+    }
+
+    @media (max-width: 768px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+
+      thead tr {
+        display: none;
+      }
+
+      tbody tr {
+        margin-bottom: 15px;
+        border-bottom: 2px solid #ddd;
+      }
+
+      td {
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
+      }
+
+      td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 15px;
+        width: 45%;
+        padding-left: 15px;
+        font-weight: bold;
+        text-align: left;
+      }
+
+      button[type="submit"] {
+        width: 100%;
+      }
+    }
+
+
+    .menu-container {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.menu-icon {
+  font-size: 24px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 30px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  min-width: 120px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  z-index: 1000;
+}
+
+.logout-btn {
+  width: 100%;
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  padding: 10px 0;
+  border-radius: 0;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.logout-btn:hover {
+  background: #c82333;
+}
+
+.dropdown-menu form {
+  margin: 0;
+  height: 100px;
+}
+
+  </style>
+</head>
+
+<body>
+
+  <div class="menu-container">
+  <div class="menu-icon">&#8942;</div> <!-- Unicode for vertical 3 dots -->
+  <div class="dropdown-menu">
+    <form action="{{ url_for('logout') }}" method="get">
+      <button type="submit" class="logout-btn">Logout</button>
+    </form>
+  </div>
+</div>
+
+  <h2>Product Order</h2>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="center">
+        {% for category, message in messages %}
+          <p id="flash-msg" class="message {{ category }}">{{ message }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <form action="/submit" method="POST" onsubmit="return validateForm()">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Quantity</th>
+          <th>Price (₹)</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td data-label="Product">
+            <div class="search-container">
+              <input type="text" id="productSearch" placeholder="Search Product">
+              <div id="results" class="search-results"></div>
+            </div>
+            <input type="hidden" name="product" id="selectedProduct">
+          </td>
+
+          <td data-label="Quantity">
+            <select name="quantity">
+              <option value="10 gram">10 Gram</option>
+              <option value="50 gram">50 Gram</option>
+              <option value="100 gram">100 Gram</option>
+              <option value="500 gram">500 Gram</option>
+              <option value="1 kg">1 KG</option>
+              <option value="1 quintal">1 Quintal</option>
+              <option value="1 ton">1 Ton</option>
+            </select>
+          </td>
+
+          <td data-label="Price (₹)">
+            <input type="number" name="price" id="price" placeholder="Enter Price" required>
+          </td>
+
+          <td data-label="Date">
+            <input type="date" name="date" required>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="center">
+      <button type="submit">Submit</button>
+    </div>
+  </form>
+
+  <script>
+    const products = [
+      "Rice", "Wheat", "Maize (Corn)", "Barley", "Millet (Bajra, Ragi, Jowar)",
+      "Chickpeas (Chana)", "Green Gram (Moong)", "Black Gram (Urad)", "Lentils (Masoor)", "Pigeon Pea (Toor/Arhar)",
+      "Potato", "Onion", "Tomato", "Brinjal (Eggplant)", "Spinach", "Cauliflower", "Cabbage", "Okra (Ladyfinger/Bhindi)",
+      "Mango", "Banana", "Apple", "Grapes", "Orange", "Papaya", "Guava", "Pomegranate",
+      "Groundnut (Peanut)", "Mustard", "Soybean", "Sunflower", "Cotton", "Sugarcane", "Tea", "Coffee", "Areca Nut (Betel Nut)",
+      "Pepper", "Cardamom", "Black Pepper", "Turmeric", "Ginger", "Garlic", "Cloves", "Cinnamon", "Cumin", "Coriander"
+    ];
+
+    function showResults(filter = "") {
+      const resultsDiv = $("#results");
+      const filterText = filter.toLowerCase().trim();
+
+      // If empty, show all products
+      const matches = filterText === "" 
+        ? products 
+        : products.filter(p => p.toLowerCase().includes(filterText));
+
+      if (matches.length === 0) {
+        resultsDiv.hide();
+        return;
+      }
+
+      resultsDiv.html("");
+      matches.forEach(item => {
+        resultsDiv.append(`<div class="result-item">${item}</div>`);
+      });
+      resultsDiv.show();
+    }
+
+    $(document).ready(function(){
+      $("#productSearch").on("input focus", function(){
+        const input = $(this).val();
+        showResults(input);
+      });
+
+      $(document).on("click", ".result-item", function(){
+        const selected = $(this).text();
+        $("#productSearch").val(selected);
+        $("#selectedProduct").val(selected);
+        $("#results").hide();
+      });
+
+      $(document).click(function(e){
+        if (!$(e.target).closest('.search-container').length) {
+          $("#results").hide();
+        }
+      });
+    });
+
+    function validateForm() {
+      const price = document.getElementById('price').value;
+      const selectedProduct = document.getElementById('selectedProduct').value;
+
+      if (!selectedProduct) {
+        alert('Please select a product!');
+        return false;
+      }
+
+      if (price <= 0) {
+        alert('Price must be a positive number!');
+        return false;
+      }
+      return true;
+    }
+
+    window.onload = function() {
+      const flash = document.getElementById('flash-msg');
+      if (flash) {
+        setTimeout(() => {
+          flash.style.display = 'none';
+        }, 5000);
+      }
+    };
+
+//drop down menu
+
+
+$(document).ready(function() {
+  $(".menu-icon").click(function(e) {
+    $(".dropdown-menu").toggle();
+    e.stopPropagation();
+  });
+
+  $(document).click(function(e) {
+    if (!$(e.target).closest('.menu-container').length) {
+      $(".dropdown-menu").hide();
+    }
+  });
+});
+
+
+  </script>
+
+  
+</body>
+</html>
